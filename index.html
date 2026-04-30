@@ -102,6 +102,10 @@
     <button class="btn btn-purple" onclick="doSend()">Send USDC →</button>
   </div>
   <div class="card" id="tab-bridge">
+    <div class="stats-row">
+      <div class="stat-box"><div class="stat-value" id="sepoliaBalance">0.00</div><div class="stat-label">Sepolia USDC</div></div>
+      <div class="stat-box"><div class="stat-value" id="arcBridgeBalance">0.00</div><div class="stat-label">Arc USDC</div></div>
+    </div>
     <div class="card-title">🌉 Bridge USDC</div>
     <div class="stats-row">
       <div class="stat-box"><div class="stat-value">~20s</div><div class="stat-label">Bridge Time</div></div>
@@ -227,8 +231,22 @@
         document.getElementById("networkBadge").innerText = "✅ Arc Testnet";
         setStatus("✅ Wallet connected!", "success");
         await fetchBalances();
+        fetchSepoliaBalance();
         refreshJarStats();
       } catch(e) { setStatus("❌ " + e.message, "error"); }
+    }
+
+    async function fetchSepoliaBalance() {
+      try {
+        const SEPOLIA_RPC = "https://ethereum-sepolia-rpc.publicnode.com";
+        const SEPOLIA_USDC = "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238";
+        const sepProvider = new ethers.providers.JsonRpcProvider(SEPOLIA_RPC);
+        const address = await signer.getAddress();
+        const sepUsdc = new ethers.Contract(SEPOLIA_USDC, ["function balanceOf(address) view returns (uint256)"], sepProvider);
+        const bal = await sepUsdc.balanceOf(address);
+        const formatted = parseFloat(ethers.utils.formatUnits(bal, 6)).toFixed(2);
+        document.getElementById("sepoliaBalance").innerText = formatted;
+      } catch(e) { console.log("Sepolia balance error:", e.message); }
     }
 
     async function fetchBalances() {
