@@ -412,25 +412,25 @@
         ["To", toLabel],
         ["Protocol", "CCTP"],
         ["Time", "~20-60 seconds"]
-      ], "blue", async () => {
-      try {
-        setStatus("🌉 Bridging " + amount + " USDC... (takes 20-60 seconds)", "loading");
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 120000);
-        const res = await fetch(BACKEND + "/bridge", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ fromChain, toChain, amount }),
-          signal: controller.signal
-        });
-        clearTimeout(timeout);
-        const data = await res.json();
-        if (data.success) { setStatus("✅ Bridge successful!", "success"); fetchBalances(); fetchSepoliaBalance(); }
-        else { setStatus("❌ " + data.error, "error"); }
-      } catch(e) {
-        if (e.name === "AbortError") { setStatus("⏱️ Bridge taking longer than usual. Check testnet.arcscan.app for your TX.", "loading"); }
-        else { setStatus("❌ " + e.message, "error"); }
-      }
+      ], "blue", async function() {
+        try {
+          setStatus("🌉 Bridging " + amount + " USDC... (takes 20-60 seconds)", "loading");
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 120000);
+          const res = await fetch(BACKEND + "/bridge", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ fromChain, toChain, amount }),
+            signal: controller.signal
+          });
+          clearTimeout(timeout);
+          const data = await res.json();
+          if (data.success) { setStatus("✅ Bridge successful!", "success"); fetchBalances(); fetchSepoliaBalance(); }
+          else { setStatus("❌ " + data.error, "error"); }
+        } catch(e) {
+          if (e.name === "AbortError") { setStatus("⏱️ Bridge taking longer than usual. Check testnet.arcscan.app for your TX.", "loading"); }
+          else { setStatus("❌ " + e.message, "error"); }
+        }
       });
     }
 
@@ -446,18 +446,18 @@
         ["To (estimated)", estimated + " " + tokenOut],
         ["Fee", "~0.000002 USDC"],
         ["Network", "Arc Testnet"]
-      ], "green", async () => {
-      try {
-        setStatus("🔄 Swapping " + amountIn + " " + tokenIn + "...", "loading");
-        const res = await fetch(BACKEND + "/swap", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ tokenIn, tokenOut, amountIn })
-        });
-        const data = await res.json();
-        if (data.success) { setStatus("✅ Swapped! Got " + data.amountOut + " " + tokenOut, "success"); fetchBalances(); }
-        else { setStatus("❌ " + data.error, "error"); }
-      } catch(e) { setStatus("❌ " + e.message, "error"); }
+      ], "green", async function() {
+        try {
+          setStatus("🔄 Swapping " + amountIn + " " + tokenIn + "...", "loading");
+          const res = await fetch(BACKEND + "/swap", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ tokenIn, tokenOut, amountIn })
+          });
+          const data = await res.json();
+          if (data.success) { setStatus("✅ Swapped! Got " + data.amountOut + " " + tokenOut, "success"); fetchBalances(); }
+          else { setStatus("❌ " + data.error, "error"); }
+        } catch(e) { setStatus("❌ " + e.message, "error"); }
       });
     }
 
