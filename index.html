@@ -61,7 +61,7 @@
       <div class="wallet-info" id="walletBalance"></div>
       <div class="network-badge" id="networkBadge">Arc Testnet</div>
     </div>
-    <button class="btn-connect" onclick="connectWallet()">Connect</button>
+    <button class="btn-connect" id="connectBtn" onclick="toggleWallet()">Connect</button>
   </div>
   <div class="balance-row" id="balanceRow">
     <div class="balance-card">
@@ -210,6 +210,22 @@
     let provider, signer, tipJar, usdcContract, eurcContract;
     let usdcBalance = 0, eurcBalance = 0, sepoliaBalance = 0;
 
+    async function toggleWallet() {
+      if (signer) {
+        signer = null;
+        provider = null;
+        document.getElementById("walletAddress").innerText = "Not connected";
+        document.getElementById("walletBalance").innerText = "";
+        document.getElementById("networkBadge").innerText = "Arc Testnet";
+        document.getElementById("balanceRow").style.display = "none";
+        document.getElementById("connectBtn").innerText = "Connect";
+        document.getElementById("connectBtn").style.background = "linear-gradient(135deg, #6366f1, #a855f7)";
+        setStatus("Wallet disconnected.", "");
+      } else {
+        await connectWallet();
+      }
+    }
+
     async function connectWallet() {
       try {
         if (!window.ethereum) { setStatus("No wallet found. Use MetaMask browser.", "error"); return; }
@@ -232,6 +248,8 @@
         const address = await signer.getAddress();
         document.getElementById("walletAddress").innerText = address.slice(0,6) + "..." + address.slice(-4);
         document.getElementById("networkBadge").innerText = "✅ Arc Testnet";
+        document.getElementById("connectBtn").innerText = "Disconnect";
+        document.getElementById("connectBtn").style.background = "linear-gradient(135deg, #dc2626, #ef4444)";
         setStatus("✅ Wallet connected!", "success");
         await fetchBalances();
         fetchSepoliaBalance();
