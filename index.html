@@ -155,13 +155,14 @@
       <div class="pct-btn" onclick="setPctSwap(75)">75%</div>
       <div class="pct-btn" onclick="setPctSwap(100)">Max</div>
     </div>
-    <label>You will receive (approx)</label>
-    <input id="swapReceive" placeholder="0.00" readonly style="color:#a855f7" />
+    <div class="chain-swap-icon" onclick="swapTokens()">⇅</div>
     <label>To Token</label>
     <select id="tokenOut" onchange="updateSwapRate()">
       <option value="EURC">EURC</option>
       <option value="USDC">USDC</option>
     </select>
+    <div class="token-available">You receive: <span id="swapReceiveSpan">0.00</span></div>
+    <input id="swapReceive" placeholder="0.00" readonly style="color:#a855f7" />
     <button class="btn btn-green" onclick="doSwap()">Swap Tokens →</button>
   </div>
   <div class="card" id="tab-tipjar">
@@ -311,6 +312,15 @@
       document.getElementById("tab-" + tab).classList.add("active");
       el.classList.add("active");
       updateSwapAvailable();
+    }
+
+    function swapTokens() {
+      const tokenIn = document.getElementById("tokenIn");
+      const tokenOut = document.getElementById("tokenOut");
+      const temp = tokenIn.value;
+      tokenIn.value = tokenOut.value;
+      tokenOut.value = temp;
+      updateSwapRate();
     }
 
     function swapChains() {
