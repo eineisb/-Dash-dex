@@ -5,6 +5,34 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dash.dex</title>
   <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+  <script type="module">
+    import { createWeb3Modal, defaultWagmiConfig } from "https://cdn.jsdelivr.net/npm/@web3modal/wagmi@5.1.11/dist/index.js";
+    import { mainnet } from "https://cdn.jsdelivr.net/npm/viem@2.21.0/chains/index.js";
+
+    const projectId = "b56e18d47c72ab683b10814fe9495694";
+    const metadata = {
+      name: "Dash.dex",
+      description: "Your personal DEX on Arc Testnet",
+      url: "https://eineisb.github.io/dashdex",
+      icons: ["https://avatars.githubusercontent.com/u/37784886"]
+    };
+
+    const arcTestnet = {
+      id: 5042002,
+      name: "Arc Testnet",
+      network: "arc-testnet",
+      nativeCurrency: { name: "USDC", symbol: "USDC", decimals: 6 },
+      rpcUrls: { default: { http: ["https://rpc.testnet.arc.network"] } },
+      blockExplorers: { default: { name: "ArcScan", url: "https://testnet.arcscan.app" } }
+    };
+
+    const chains = [arcTestnet];
+    const config = defaultWagmiConfig({ chains, projectId, metadata });
+    const modal = createWeb3Modal({ wagmiConfig: config, projectId, chains });
+
+    window.openWeb3Modal = () => modal.open();
+    window.web3modal = modal;
+  </script>
   <script src="https://cdn.jsdelivr.net/npm/@web3modal/standalone@2.4.1/dist/index.umd.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@walletconnect/web3-provider@1.8.0/dist/umd/index.min.js"></script>
   <style>
@@ -277,7 +305,11 @@
     let usdcBalance = 0, eurcBalance = 0, sepoliaBalance = 0;
 
     function showWalletModal() {
-      document.getElementById("walletModalOverlay").classList.add("active");
+      if (window.openWeb3Modal) {
+        window.openWeb3Modal();
+      } else {
+        document.getElementById("walletModalOverlay").classList.add("active");
+      }
     }
 
     function closeWalletModal() {
