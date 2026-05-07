@@ -215,8 +215,10 @@
     const TIPJAR_ABI=["function tip(uint256 amount, string memory message) public","function getBalance() public view returns (uint256)","function withdraw() public","function totalTipsReceived() public view returns (uint256)"];
     const TOKEN_ABI=["function approve(address spender, uint256 amount) public returns (bool)","function balanceOf(address account) public view returns (uint256)","function transfer(address to, uint256 amount) public returns (bool)"];
     let provider,signer,tipJar,usdcContract,eurcContract;
-    let usdcBalance=0,eurcBalance=0,sepoliaBalance=0,pendingAction=null;
+    let usdcBalance=0,eurcBalance=0,sepoliaBalance=0,pendingAction=null,isProcessing=false;
 
+    function lockUI(){isProcessing=true;document.querySelectorAll(".btn-primary").forEach(b=>{b.disabled=true;b.style.opacity="0.5";b.style.cursor="not-allowed";});}
+    function unlockUI(){isProcessing=false;document.querySelectorAll(".btn-primary").forEach(b=>{b.disabled=false;b.style.opacity="1";b.style.cursor="pointer";});}
     function showWalletModal(){if(window.openWeb3Modal){window.openWeb3Modal();}else{document.getElementById("walletModalOverlay").classList.add("active");}}
     function closeWalletModal(){document.getElementById("walletModalOverlay").classList.remove("active");}
     async function connectWithBrowser(){closeWalletModal();await connectWallet();}
@@ -299,13 +301,13 @@ async function doSend(){
         const to=document.getElementById("sendTo").value;
         const amount=document.getElementById("sendAmount").value;
         if(!to||!amount){setStatus("Please fill in all fields.","error");return;}
-        setStatus("Sending "+amount+" USDC...","loading");
+        lockUI();setStatus("Sending "+amount+" USDC...","loading");
         const parsed=ethers.utils.parseUnits(amount,6);
         const tx=await usdcContract.transfer(to,parsed);
         await tx.wait();
         setStatus("Sent "+amount+" USDC. TX: "+tx.hash.slice(0,10)+"...","success");
         fetchBalances();
-      }catch(e){setStatus(e.message,"error");}
+      }catch(e){setStatus(e.message,"error");}finally{unlockUI();}
     }
 
     async function doBridge(){
@@ -317,7 +319,7 @@ async function doSend(){
       const toLabel=toChain==="Arc_Testnet"?"Arc Testnet":"Ethereum Sepolia";
       showModal("Confirm Bridge",[["Amount",amount+" USDC"],["From",fromLabel],["To",toLabel],["Protocol","CCTP"],["Est. Time","20-60 seconds"]],"blue",async function(){
         try{
-          setStatus("Bridging "+amount+" USDC...","loading");
+          lockUI();setStatus("Bridging "+amount+" USDC...","loading");
           const controller=new AbortController();
           const timeout=setTimeout(()=>controller.abort(),120000);
           const res=await fetch(BACKEND+"/bridge",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({fromChain,toChain,amount}),signal:controller.signal});
@@ -327,7 +329,7 @@ async function doSend(){
           else{setStatus(data.error,"error");}
         }catch(e){
           if(e.name==="AbortError"){setStatus("Bridge taking longer than usual. Check testnet.arcscan.app.","loading");}
-          else{setStatus(e.message,"error");}
+          else{setStatus(e.message,"error");}finally{unlockUI();}
         }
       });
     }
@@ -341,12 +343,12 @@ async function doSend(){
       const estimated=(parseFloat(amountIn)*rate).toFixed(4);
       showModal("Confirm Swap",[["You Pay",amountIn+" "+tokenIn],["You Receive (est.)",estimated+" "+tokenOut],["Rate","1 "+tokenIn+" = "+rate+" "+tokenOut],["Fee","~0.000002 USDC"],["Network","Arc Testnet"]],"green",async function(){
         try{
-          setStatus("Swapping "+amountIn+" "+tokenIn+"...","loading");
+          lockUI();setStatus("Swapping "+amountIn+" "+tokenIn+"...","loading");
           const res=await fetch(BACKEND+"/swap",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({tokenIn,tokenOut,amountIn})});
           const data=await res.json();
           if(data.success){setStatus("Swapped "+amountIn+" "+tokenIn+" for "+data.amountOut+" "+tokenOut+".","success");fetchBalances();}
-          else{setStatus(data.error,"error");}
-        }catch(e){setStatus(e.message,"error");}
+          else if(data.error&&data.error.includes("No route")){setStatus("Swap route unavailable on Arc Testnet right now. Try a smaller amount or try again later.","error");}else{setStatus(data.error,"error");}
+        }catch(e){setStatus(e.message,"error");}finally{unlockUI();}
       });
     }
 
